@@ -1,0 +1,111 @@
+<%- include("../partials/header"); %>
+<link rel="stylesheet" href="dist/css/walkingline-loading.css"/>
+<style>
+	body {
+		padding-top: 70px;
+	}
+	#campaign-box {
+		display: -webkit-flex; /* Safari */
+    	-webkit-flex-wrap: wrap; /* Safari 6.1+ */
+		display: flex;
+		flex-wrap: wrap;
+	}
+	.campaign {
+		width: 22%;
+		margin: 1%;
+		padding: 5px;
+		background-color: white;
+		box-shadow:  0 0 10px rgba(0,0,0,.5);
+	}
+	.campaign-preview {
+		width: 100%;
+		max-height: 190px;
+	}
+</style>
+</head>
+	<body>
+		<%- include("../partials/navbar"); %>
+		<script>
+			 function init() {
+			    if (!sessionStorage.userID || sessionStorage.userID == null) {
+			      	window.location.href = "/";
+			    }
+			 } 
+
+			init();			  
+		</script>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<h3>TUA Campaigns</h3><hr>
+					<div class="col-md-12" id="campaign-box">
+						<div class='cssload-loader-walk' style='margin-top: 15%'>
+							<div></div><div></div><div></div><div></div><div></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			$(document).ready(function () {
+				var campaign_box = document.getElementById('campaign-box');
+
+				function getCampaignData () {
+					$.ajax ({
+						method: 'GET',
+						url: 'https://honeypot.palmsolutions.co/api/v0/aircast_user_campaign.php?UserID=' + sessionStorage.userID,
+						success: function (res) {
+							var campaigns = res.campaigns;
+
+							if (campaigns.length > 0) {
+								campaign_box.innerHTML = "";
+							} else {
+								campaign_box.innerHTML = '<div class="jumbotron col-md-12"><br/><h1>Ooops!</h1><p>No campaign found. Upload campaign first.</p></div>';
+							}
+
+							for (var i = 0; i < campaigns.length; i++) {
+								var content = "";
+								var id = campaigns[i].campaign_id;
+								var name = campaigns[i].campaign_name;
+								var date = campaigns[i].date_uploaded;
+
+								content += '<div class="col-md-3 campaign">';
+								content += '<div id="preview_' + i + '"><img class="campaign-preview" src="img/loading.png"></img></div>';
+								content += '<p class="col-md-12"><b>ID:</b> ' + id + '</p>'
+								content += '<p class="col-md-12"><b>Name:</b> ' + name + '</p>'
+								content += '<p class="col-md-12"><b>Uploaded:</b> ' + date + '</p>'
+								content += '</div>'; 
+
+								campaign_box.innerHTML += content;
+							}
+						}
+					})
+					loadContent();
+				}
+
+				function loadContent () {
+					$.ajax ({
+						method: 'GET',
+						url: 'https://honeypot.palmsolutions.co/api/v0/aircast_user_campaign.php?UserID=' + sessionStorage.userID,
+						success: function (res) {
+							var campaigns = res.campaigns;
+
+							for (var i = 0; i < campaigns.length; i++) {
+								var preview_box = document.getElementById('preview_' + i);
+								var template = campaigns[i].template;
+								var preview = campaigns[i].preview;
+
+								if (template == "temp4") {
+									preview_box.innerHTML = '<img class="campaign-preview" src="' + preview + '"></img>';
+								} else if (template == "temp2") {
+									preview_box.innerHTML = '<video class="campaign-preview" src="' + preview + '" controls></video>';
+								}
+							}
+						}
+					})
+				}
+				getCampaignData();				
+			})
+		</script>
+	</body>
+</html>

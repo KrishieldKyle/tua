@@ -1,0 +1,727 @@
+<%- include('../partials/header'); %>
+<link rel="stylesheet" href="dist/css/funky.css"/>
+<link rel="stylesheet" href="sweetalert/dist/sweetalert.css"/>
+<script src="sweetalert/dist/sweetalert.min.js"></script>
+<script src="js/jquery-ui.min.js"></script>
+<style>
+	body {
+		padding-top: 50px;
+		background-color: #454545;
+	}
+	.second-nav {
+		position: fixed;
+		background-color: white;
+		padding: 10px;
+		z-index: 1;
+	}
+	.second-nav select {
+		border: none;
+		padding: 5px;
+		color: #0b4072;
+	}
+	.second-nav option {
+		color: black;
+	}
+	.second-nav input[type=radio] {
+		background-color: orange;
+	}
+	#map {
+		height: 100%;
+	}
+	.campaign-box {
+		position: fixed;
+		display: none;
+		background-color: white;
+		padding: 0px;
+		top: 18%;
+		height: 77%;
+		z-index: 2;
+	}
+	.campaign-box img {
+		width: 100%;
+		height: 100px;
+		max-height: 100px;
+		margin-bottom: 10px;
+	}
+	.campaign-header {
+		background-color: rgba(0,0,0,.6);
+		padding: 5px;
+		color: white;
+		margin-bottom: 15px;
+	}
+	.campaign-header button {
+		border: none;
+		background: none;
+		outline: none;
+		float: right;
+	}
+	.tv-border {
+		width: 100%;
+		box-shadow: 0 0 10px rgba(0,0,0,.5);
+		height: 162px;
+		max-height: 162px;
+		margin-bottom: 10px;
+	}
+	.campaign-border {
+		width: 100%;
+		box-shadow: 0 0 10px rgba(0,0,0,.5);
+		height: 100px;
+		max-height: 100px;
+		margin-bottom: 10px;
+	}
+	.campaign-container {
+		height: 75%;
+		max-height: 75%;
+	}
+	.campaigns {
+		margin: 5px;
+	}
+	.add-campaign {
+		box-shadow: 0 0 10px rgba(0,0,0,.5);
+		position: fixed;
+		display: none;
+		height: 77%;
+		padding: 0px;
+		top: 18%;
+		background-color: white;
+		z-index: 1;
+	}
+	.add-campaign h4 {
+		background-color: rgba(0,0,0,.6);
+		padding: 15px;
+		color: white;
+		margin-top: 0px;
+		margin-bottom: 15px;
+	}
+	.add-campaign h5 {
+		margin-left: 25px;
+	}
+	#droppable {
+		width: 100%;
+		height: 180px;
+		max-height: 180px;
+		margin-bottom: 30px;
+	}
+	.add-campaign-button {
+		bottom: 10%;
+	}
+</style>
+<link rel="stylesheet" href="dist/css/animate.css">
+</head>
+	<body>
+		<%- include("../partials/navbar") %>
+		<script>
+			 function init() {
+			    if (!sessionStorage.userID || sessionStorage.userID == null) {
+			      	window.location.href = "/";
+			    }
+			 } 
+
+			init();			  
+		</script>
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-12 second-nav">
+					<select class="col-md-2" id="areas" onchange="filterPointers()">
+						<option value="all">Select City</option>
+					</select>
+					<span class="col-md-2" style="margin-left: 30px"><input type="radio" id="all" checked name="status" onchange="filterPointers()" />&nbsp;<giro id="total-sites">0</giro> All Sites</span>
+					<span class="col-md-2"><input type="radio" id="on" name="status" onchange="filterPointers()"/>&nbsp;<giro id="online-sites">0</giro> Online Sites</span>
+					<span class="col-md-2"><input type="radio" id="off" name="status" onchange="filterPointers()"/>&nbsp;<giro id="offline-sites">0</giro> Offlines Sites</span>
+					<!-- <span class="col-md-3"><button class="btn btn-sm btn-primary" style="float: right" onclick="openCampaignWindow()">Open Campaigns</button></span> -->
+				</div>
+
+				<div class="campaign-box col-md-2 col-md-push-9 animated slideInRight" id="campaign-box">
+					<div class="col-md-12 campaign-header">
+						<span><h4><giro id="header-title" style="margin: 0px">Campaign</giro><button class="glyphicon glyphicon-remove" onclick="closeCampaignWindow()"></button></h4></span>
+					</div>
+
+					<div class="col-md-12 campaign-container" id="campaign-container">
+						<!-- Campaigns here-->
+					</div>
+
+					<div class="col-md-12">
+						<center>
+							<button id="btn-prev-page" class="glyphicon glyphicon-menu-left btn btn-sm btn-default" style="visibility: hidden"></button>
+							<input id="txt-page-number" type="text" class="btn btn-sm" style="width: 40px" value="1" readonly="true"/>
+							<button id="btn-next-page" class="glyphicon glyphicon-menu-right btn btn-sm btn-default" style="visibility: visible"></button>
+						</center>
+					</div>
+				</div>
+
+				<div id="add-campaign-box" class="col-md-8 col-md-offset-1 add-campaign animated slideInLeft">
+					<span><h4 id="add-campaign-to">Add Campaign:</h4></span>
+					<div style="padding: 5px">
+						<div class="col-md-5">
+							<h2 class="col-md-12">Drop campaign here:</h2>
+							<div class="col-md-12" id="add-campaign-div">
+								<img id="droppable" class="col-md-12" src="img/add-icon.png" style="opacity: 0.5;">
+							</div>
+							<h5 id="add-campaign-material-name"><b>Campaign Name:</b></h5>
+							<h5 id="add-campaign-material-date"><b>Campaign Date:</b></h5>
+							<h5 id="add-campaign-material-format"><b>Campaign Format:</b></h5>
+						</div>
+						<div class="col-md-6 col-md-offset-1">
+							<h2 class="col-md-12">Time Slot:</h2>
+							<div class="col-md-12">
+								<table class="col-md-12 timeslot funkyradio">
+									<tr>
+										<td class="funkyradio-primary"><input type="checkbox" id="morning" value="Morning" class="btn" onchange="selectTimeslot()"/><label for="morning"><b>Morning</b> 6:00am - 11:00am</label></td>
+									</tr>
+									<tr>
+										<td class="funkyradio-primary"><input type="checkbox" id="lunch" value="Lunch" class="btn" onchange="selectTimeslot()"/><label for="lunch"><b>Lunch</b>	 11:00am - 1:00pm</label></td>
+									</tr>
+									<tr>
+										<td class="funkyradio-primary"><input type="checkbox" id="afternoon" value="Afternoon" class="btn" onchange="selectTimeslot()"/><label for="afternoon"><b>Afternoon</b> 1:00pm - 5:00pm</label></td>
+									</tr>
+									<tr>
+										<td class="funkyradio-primary"><input type="checkbox" id="evening" value="Evening" class="btn" onchange="selectTimeslot()"/><label for="evening"><b>Evening</b> 5:00pm - 9:00pm</label></td>
+									</tr>
+									<tr>
+										<td class="funkyradio-primary"><input type="checkbox" id="nighttime" value="Nightime" class="btn" onchange="selectTimeslot()"/><label for="nighttime"><b>Nighttime</b> 9:00pm - 12:00am</label></td>
+									</tr>
+									<tr>
+										<td class="funkyradio-primary"><input type="checkbox" id="graveyard" value="Graveyard" class="btn" onchange="selectTimeslot()"/><label for="graveyard"><b>Graveyard</b> 12:00am - 6:00am</label></td>
+									</tr>
+								</table>
+							</div>
+						</div>
+						<div class="col-md-12 add-campaign-button">
+							<button id="btn-deploy" class="col-md-6 col-md-offset-3 btn btn-lg btn-success" onclick="deployCampaign()" disabled>Deploy Campaign</button>
+						</div>
+					</div>
+				</div>
+
+				<div id="map" class="col-md-12"></div>
+			</div>
+		</div>
+		<div class="container-fluid">
+			<div class="row">
+				
+			</div>
+		</div>
+		<script>
+			var userID = sessionStorage.userID;
+		  	var map;
+		  	var markers = [];
+		  	var areas = [];
+		  	var online = 0;
+		  	var offline = 0;
+	      	var tv_count = 0;
+	      	var infowindow = null;
+	      	var isAreaLoaded = false;
+	      	var selected_rpiID = null;
+	      	var campaign_number = 0;
+	      	var rpiID_array = [];
+	      	var campaign_array = [];
+	      	var selected_timeslot = [];
+	      	var selected_campaign = [];
+	      	var latlong_rpiID_array = [];
+
+	      	function initMap() {
+	        	var center = {lat: 14.540972, lng: 121.024493};
+	        	map = new google.maps.Map(document.getElementById('map'), {
+	          		zoom: 11,
+	          		center: center
+	        	});
+
+	        	google.maps.event.addListener(map,'click',function(){
+	            infowindow.close();
+	            closeCampaignWindow();
+	        	})
+
+	        	getLocation("all");
+	        	getCampaigns();
+	      	}
+
+	      	function getCampaigns() {
+	      		var campaign_container = document.getElementById("campaign-container");
+	      		$.ajax({
+	      			method: 'POST',
+	      			url: 'https://dashboard.aircast.ph/usercampaign',
+	      			data: {
+	      				"UserID": userID
+	      			},
+	      			dataType: 'json',
+	      			success: function (res) {
+	      				var campaigns = res.campaigns;
+	      				for (var i = 0; i < campaigns.length; i++) {
+	      					var campaign = "";
+	      					campaign += '<div id="campaign_'+i+'" class="col-md-12 campaigns">';
+	      					if (campaigns[i].template == "temp4") {
+	      						campaign += '<a href="#" data-toggle="tooltip" data-placement="left" title="'+campaigns[i].campaign_name+'"><img src="'+campaigns[i].preview+'" class="campaign-border" alt="img/loading.png" class="col-md-12"></img></a>';
+	      					} else if (campaigns[i].template == "temp2") {
+	      						campaign += '<a href="#" data-toggle="tooltip" data-placement="left" title="'+campaigns[i].campaign_name+'"><video src="'+campaigns[i].preview+'" class="campaign-border" alt="img/loading.png" autoplay muted loop></video></a>';
+	      					}
+	      					campaign += '</div>';
+	      					campaign_array.push({ID: campaigns[i].campaign_id, element: campaign});
+	      				}
+
+	      				var len = 0;
+
+	      				if (campaign_array.length == 0) {
+	      					len = 0;
+	      				} else if (campaign_array.length == 1) {
+	      					len = 1;
+	      				}if (campaign_array.length == 2) {
+	      					len = 2;
+	      				}if (campaign_array.length > 2) {
+	      					len = 3;
+	      				}
+
+			    		for(var i = 0; i < len; i++) {
+			    			campaign_container.innerHTML += campaign_array[i].element;
+			    		}
+
+			    		setDraggable(0);
+			    		setDroppable();
+	      			}
+	      		})
+	      	}
+
+	      	function selectTimeslot() {
+				var morning = document.getElementById('morning');
+				var lunch = document.getElementById('lunch');
+				var afternoon = document.getElementById('afternoon');
+				var evening = document.getElementById('evening');
+				var nighttime = document.getElementById('nighttime');
+				var graveyard = document.getElementById('graveyard');
+				var temp_timeslot = [];
+
+				if (morning.checked) {
+					temp_timeslot.push({Timeslot: morning.value, SpotNumber: 99});
+				}
+				if (lunch.checked) {
+					temp_timeslot.push({Timeslot: lunch.value, SpotNumber: 99});
+				}
+				if (afternoon.checked) {
+					temp_timeslot.push({Timeslot: afternoon.value, SpotNumber: 99});
+				}
+				if (evening.checked) {
+					temp_timeslot.push({Timeslot: evening.value, SpotNumber: 99});
+				}
+				if (nighttime.checked) {
+					temp_timeslot.push({Timeslot: nighttime.value, SpotNumber: 99});
+				}
+				if (graveyard.checked) {
+					temp_timeslot.push({Timeslot: graveyard.value, SpotNumber: 99});
+				}
+				selected_timeslot = temp_timeslot;
+				checkHasValues();
+			}
+
+			function checkHasValues () {
+				if (selected_timeslot.length > 0 && selected_campaign) {
+					document.getElementById('btn-deploy').disabled = false;
+				} else {
+					document.getElementById('btn-deploy').disabled = true;
+				}
+			}
+
+	      	function setDraggable (index) {
+	      		$(function() {
+	      			for (var i = index; i < campaign_array.length; i++) {
+	      				$('#campaign_' + i).data('id', campaign_array[i].ID).draggable({
+	      					containment: 'body',
+	      					helper: 'clone',
+	      					cursor: 'move',
+	      					revert: true,
+	      					snap: true,
+	      				});
+	      			}
+	      		})
+	      	}
+
+	      	function setDroppable() {
+	      		$('#droppable').droppable({
+	    			drop: function (event, ui) {
+	    				var id = $(ui.draggable).data('id');
+	    				var container = document.getElementById('add-campaign-div');
+
+	    				ui.draggable.draggable('option', 'revert', false);
+	    				container.innerHTML = '<img id="droppable" class="col-md-12" src="img/add-icon.png" style="opacity: 0.5;"></img>';
+	    				$.ajax({
+	    					method: 'POST',
+	    					url: 'https://dashboard.aircast.ph/usercampaign',
+	    					data: {
+	    						"UserID": userID
+	    					},
+	    					dataType: 'json',
+	    					success: function(res) {
+	    						var data = res.campaigns;
+	    						var template = "";
+	    						for(var i = 0; i < data.length; i++) {
+	    							if (data[i].campaign_id == id) {
+	    								if (data[i].template == "temp4") {
+	    									container.innerHTML = '<img id="droppable" class="col-md-12" src="'+data[i].preview+'"></img>';
+	    								} else {
+	    									container.innerHTML = '<video id="droppable" class="col-md-12" src="'+data[i].preview+'" autoplay loop></video>';
+	    								}
+	    								template = data[i].template;
+	    								document.getElementById('add-campaign-material-name').innerHTML = "<b>Campaign Name: </b>" + data[i].campaign_name;
+	    								document.getElementById('add-campaign-material-date').innerHTML = "<b>Campaign Date: </b>" + data[i].date_uploaded;
+	    								if (data[i].template == "temp2") {
+	    									document.getElementById('add-campaign-material-format').innerHTML = "<b>Campaign Format: </b>Video";
+	    								} else {
+	    									document.getElementById('add-campaign-material-format').innerHTML = "<b>Campaign Format: </b>Image";
+	    								}
+	    							}
+	    						}
+	    						selected_campaign = [];
+	    						selected_campaign.push({id: parseInt(id), template: template});
+	    						checkHasValues();
+	    						setDroppable();
+	    					}
+	    				})
+	    			}
+	    		})
+	      	}
+
+	      	function deployCampaign() {
+	      		var data = {
+	      			RpiID: selected_rpiID,
+	      			CampaignID: selected_campaign[0].id,
+	      			Template: selected_campaign[0].template,
+	      			Time: selected_timeslot
+	      		};
+	      		$.ajax ({
+	      			method: 'POST',
+	      			url: 'https://dashboard.aircast.ph/insertcampaign',
+	      			data: data,
+	      			dataType: 'json',
+	      			success: function (res) {
+	      				swal("Success", "Yey! Campaign added", "success");
+	      				document.getElementById('add-campaign-div').innerHTML = '<img id="droppable" class="col-md-12" src="img/add-icon.png" style="opacity: 0.5;"></img>';
+				    	setDroppable();
+				    	selected_campaign = null;
+				    	document.getElementById('add-campaign-material-name').innerHTML = "<b>Campaign Name: </b>";
+						document.getElementById('add-campaign-material-date').innerHTML = "<b>Campaign Date: </b>";
+						document.getElementById('add-campaign-material-format').innerHTML = "<b>Campaign Format: </b>";
+						document.getElementById('morning').checked = false;
+						document.getElementById('lunch').checked = false;
+						document.getElementById('afternoon').checked = false;
+						document.getElementById('evening').checked = false;
+						document.getElementById('nighttime').checked = false;
+						document.getElementById('graveyard').checked = false;
+	      			}
+	      		})
+	      	}
+
+	      	var page_counter = 0;
+	      	$('#btn-next-page').click(function() {
+	      		var campaign_container = document.getElementById("campaign-container");
+	      		var ctr = 0;
+	      		var campaigns = "";
+	      		campaign_container.innerHTML = "";
+	      		page_counter += 3;
+	      		for (var i = page_counter; i < campaign_array.length; i++) {
+	      			campaigns += campaign_array[i].element;
+	      			ctr++;
+	      			if (ctr == 3) {
+	      				break;
+	      			}
+	      		}
+	      		campaign_container.innerHTML = campaigns;
+	      		document.getElementById('txt-page-number').value = parseInt(document.getElementById('txt-page-number').value) + 1;
+	      		document.getElementById('btn-prev-page').style.visibility = 'visible';
+	      		if ((page_counter + 3) >= campaign_array.length - 1) {
+	      			document.getElementById('btn-next-page').style.visibility = 'hidden';
+	      		}
+	      		setDraggable(page_counter);
+	      	})
+
+	      	$('#btn-prev-page').click(function() {
+      			var campaign_container = document.getElementById("campaign-container");
+	      		var ctr = 0;
+	      		var campaigns = "";
+	      		campaign_container.innerHTML = "";
+	      		page_counter -= 3;
+	      		for (var i = page_counter; i < campaign_array.length; i++) {
+	      			campaigns += campaign_array[i].element;
+	      			ctr++;
+	      			if (ctr == 3) {
+	      				break;
+	      			}
+	      		}
+	      		campaign_container.innerHTML = campaigns;
+	      		document.getElementById('txt-page-number').value = parseInt(document.getElementById('txt-page-number').value) - 1;
+	      		document.getElementById('btn-next-page').style.visibility = 'visible';
+	      		if (page_counter == 0) {
+	      			document.getElementById('btn-prev-page').style.visibility = 'hidden';
+	      		}
+	      		setDraggable(page_counter);
+	      	})
+
+	      	function getLocation(filter) {
+	      		rpiID_array = [];
+	      		online = 0;
+				offline = 0;
+			    tv_count = 0;
+		      	$.ajax({
+		      		method: 'POST',
+		      		url: 'https://dashboard.aircast.ph/getlocationbyuserid',
+		      		data: {
+		      			UserID: userID,
+		      		},
+		      		dataType: 'json',
+		      		success: function(res) {
+		      			var data = res.locations;
+		      			var selected_area = document.getElementById('areas');
+
+		      			for (var i = 0; i < data.length; i++) {
+		      				var rpi_id = data[i].RpiID;
+		      				var room = data[i].Room;
+		      				var lat = parseFloat(data[i].Latitude);
+		      				var lng = parseFloat(data[i].Longitude);
+		      				var loc = data[i].Location;
+
+		      				var isSeen = false;
+		      				for (var x = 0; x < latlong_rpiID_array.length; x++) {
+		      					if (lat == latlong_rpiID_array[x].lat && lng == latlong_rpiID_array[x].lng) {
+		      						isSeen = true;
+		      						latlong_rpiID_array[x].rpiID.push({id: parseInt(rpi_id), room: room, location: loc});
+		      						break;
+		      					}
+		      				}
+
+		      				if (isSeen == false) {
+		      					latlong_rpiID_array.push({
+		      						lat: lat,
+		      						lng: lng,
+		      						rpiID: [
+		      							{
+		      								id: parseInt(rpi_id),
+		      								room: room,
+		      							}
+		      						],
+		      						location: loc
+		      					});
+		      				}
+		      			}
+		      			
+		      			for (var i = 0; i < data.length; i++) {
+							var rpiID = data[i].RpiID;
+							var address = data[i].Address;
+							var location = data[i].Location;
+							var room = data[i].Room;
+							var image = data[i].SiteImage;
+							var area = data[i].Area;
+							var openTime = data[i].OpenTime;
+							var closeTime = data[i].CloseTime;
+							var footTraffic = data[i].FootTraffic; 
+							var latlong = {lat: parseFloat(data[i].Latitude), lng: parseFloat(data[i].Longitude)};
+							var status = data[i].Expected;
+
+							rpiID_array.push({id: rpiID, name: room});
+							
+							if (selected_area.value == area) {
+								if (filter == "on") {
+									if (status == 1) {
+										addMarkers(rpiID, location, room, image, address, area, openTime, closeTime, footTraffic, latlong, i * 70);
+										online++;
+									} else {
+										offline++;
+									}
+								} else if (filter == "off") {
+									if (status == 0) {
+										addMarkers(rpiID, location, room, image, address, area, openTime, closeTime, footTraffic, latlong, i * 70);
+										offline++;
+									} else {
+										online++;
+									}
+								} else if (filter == "all") {
+									addMarkers(rpiID, location, room, image, area, address, openTime, closeTime, footTraffic, latlong, i * 70);
+									if (status == 1) {
+										online++;
+									} else {
+										offline++;
+									}
+								}
+						        tv_count++;
+					        } else if (selected_area.value == "all") {
+								if (filter == "on") {
+									if (status == 1) {
+										addMarkers(rpiID, location, room, image, address, area, openTime, closeTime, footTraffic, latlong, i * 70);
+										online++;
+									} else {
+										offline++;
+									}
+								} else if (filter == "off") {
+									if (status == 0) {
+										addMarkers(rpiID, location, room, image, address, area, openTime, closeTime, footTraffic, latlong, i * 70);
+										offline++;
+									} else {
+										online++;
+									}
+								} else if (filter == "all") {
+									addMarkers(rpiID, location, room, image, address, area, openTime, closeTime, footTraffic, latlong, i * 70);
+									if (status == 1) {
+										online++;
+									} else {
+										offline++;
+									}
+								}
+						        tv_count++;
+					        }
+
+					        var isThere = false;
+					        for (var x = 0; x < areas.length; x++) {
+					        	if (area == areas[x]) {
+					        		isThere = true;
+					        	}
+					        }
+					        if (isThere == false) {
+					        	areas.push(area);
+					        }
+							
+						}
+						document.getElementById("total-sites").innerHTML = tv_count;
+						document.getElementById("online-sites").innerHTML = online;
+						document.getElementById("offline-sites").innerHTML = offline;
+						loadArea();
+		      		}
+		      	})
+
+	      	}
+
+			function loadArea () {
+				var area_container = document.getElementById("areas");
+				if (isAreaLoaded == false) {
+					area_container.innerHTML = "";
+					area_container.innerHTML += "<option value='all'>ALL</option>";
+					for (var i = 0; i < areas.length; i++) {
+						area_container.innerHTML += "<option value='" + areas[i] + "'>" + areas[i] + "</option>";
+					}
+					isAreaLoaded = true;
+				}
+			}
+
+	        function addMarkers (rpiID, location, room, image, address, area, openTime, closeTime, footTraffic, latlong, timeout) {
+	        	var loc = 'img/map-icon.png';
+
+	        	setTimeout(function () {
+	        		var marker = new google.maps.Marker({
+						position: latlong,
+						map: map,
+						icon: loc,
+						title: 'TUA | ' + room,
+			        });
+			        google.maps.event.addListener(marker, 'click', function(event) {
+						viewSiteInfo(marker, rpiID, location, room, image, address, area, openTime, closeTime, footTraffic, latlong);
+					});
+			        markers.push(marker);
+	        	}, timeout);
+	        }
+
+	        function addCampaign (id) {
+	        	document.getElementById('add-campaign-box').style.display = 'block';
+	        	document.getElementById('campaign-box').style.display = 'block';
+	        	selected_rpiID = id;
+	        	for (var i = 0; i < rpiID_array.length; i++) {
+	        		if (rpiID_array[i].id == id) {
+	        			document.getElementById('add-campaign-to').innerHTML = 'Add Campaign: ' + rpiID_array[i].name;
+	        		}
+	        	}
+	        }
+
+	        function viewSiteInfo(marker, rpiID, location, room, image, address, area, openTime, closeTime, footTraffic, latlong) {
+	        	selected_rpiID = rpiID;
+	        	var content = "";
+				if(infowindow){
+					infowindow.close();
+				}
+
+				if (sessionStorage.accessLevel == 1 || sessionStorage.accessLevel == 2) {
+					for (var i = 0; i < latlong_rpiID_array.length; i++) {
+						if (latlong.lat == latlong_rpiID_array[i].lat && latlong.lng == latlong_rpiID_array[i].lng && latlong_rpiID_array[i].rpiID.length == 1) {
+							content = "<div class='scrollFix'><h3>" + room + "</h3>" + imageString(image, room, location) + "<br/><br/><p><b>Address: </b>" + address + "</p><p><b>Area: </b>" + area + "</p><button class='btn btn-sm btn-primary' onclick='addCampaign(" + rpiID + ")'>Add Campaign</button>&nbsp;&nbsp;<button class='btn btn-sm btn-primary' onclick='updateCampaign(" + rpiID + ")'>Manage Campaigns</button></div>";
+						} else if (latlong.lat == latlong_rpiID_array[i].lat && latlong.lng == latlong_rpiID_array[i].lng && latlong_rpiID_array[i].rpiID.length > 1) {
+							content = "<div class='scrollFix'><h3>" + room + "</h3>" + imageString(image, room, location) + "<br/><br/><p><b>Address: </b>" + address + "</p><p><b>Area: </b>" + area + "</p>";
+
+							for (var x = 0; x < latlong_rpiID_array[i].rpiID.length; x++) {
+								content += "<button class='btn btn-sm btn-primary' onclick='addCampaign(" + latlong_rpiID_array[i].rpiID[x].id + ")' style='width: 300px'>Add campaign to " + latlong_rpiID_array[i].rpiID[x].room + "</button><br>";
+							}
+
+							content += "&nbsp;&nbsp;<button class='btn btn-sm btn-primary' onclick='manageCampaign()' style='width: 300px'>Manage Campaigns</button></div>";
+						}
+					}
+				} else {
+					content = "<div class='scrollFix'><h3>" + room + "</h3>" + imageString(image, room, location) + "<br/><br/><p><b>Address: </b>" + address + "</p><p><b>Area: </b>" + area + "</p></div>";
+				}
+
+				infowindow = new google.maps.InfoWindow({
+					maxWidth: 300,
+					content: content
+				});
+				
+				infowindow.open(map, marker);
+	        }
+
+	        function imageString(path, alt, location){
+		        var image_url;
+		        if(path !== ""){
+		          image_url = '<img class="aircast-site-image" src="' + path + '" alt="' + alt + '" style="width: 300px; max-width:300px; max-height: 200px"></img>';
+		        }else{
+		          	image_url = '<img class="aircast-site-image" src="img/tv.png" alt=' + alt + ' style="width: 300px; max-width:300px max-height: 200px"></img>';
+		        }
+		        return image_url;
+		    }
+
+		    function clearMarkers() {
+		        for (var i = 0; i < markers.length; i++) {
+		          	markers[i].setMap(null);
+		        }
+		        markers = [];
+		    }
+
+		    function filterPointers () {
+		    	if(infowindow){
+					infowindow.close();
+				}
+		    	var all = document.getElementById('all');
+		    	var on = document.getElementById('on');
+		    	var off = document.getElementById('off'); 
+		    	clearMarkers();
+		    	latlong_rpiID_array = [];
+		    	if (all.checked == true) {
+		    		getLocation("all");
+		    	} else if (on.checked == true) {
+		    		getLocation("on");
+		    	} else if (off.checked == true) {
+		    		getLocation("off");
+		    	}
+		    }
+
+		    function closeCampaignWindow () {
+		    	document.getElementById('add-campaign-box').style.display = 'none';
+		    	document.getElementById('campaign-box').style.display = 'none';
+		    	document.getElementById('add-campaign-to').innerHTML = 'Add Campaign: ';
+		    	document.getElementById('add-campaign-div').innerHTML = '<img id="droppable" class="col-md-12" src="img/add-icon.png" style="opacity: 0.5"></img>';
+		    	setDroppable();
+		    	selected_campaign = null;
+		    	document.getElementById('add-campaign-material-name').innerHTML = "<b>Campaign Name: </b>";
+				document.getElementById('add-campaign-material-date').innerHTML = "<b>Campaign Date: </b>";
+				document.getElementById('add-campaign-material-format').innerHTML = "<b>Campaign Format: </b>";
+				document.getElementById('morning').checked = false;
+				document.getElementById('lunch').checked = false;
+				document.getElementById('afternoon').checked = false;
+				document.getElementById('evening').checked = false;
+				document.getElementById('nighttime').checked = false;
+				document.getElementById('graveyard').checked = false;
+		    }
+
+			function updateCampaign(rpi_id) {
+				sessionStorage.rpiID = rpi_id;
+				window.location.href = "/update-campaign";
+			}
+
+			function manageCampaign() {
+				window.location.href = "/manage-campaign";
+			}
+
+	    </script>
+	    <script async defer
+	    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYYEieZrRv80TsXIfRDJunAuafXV1gSWc&callback=initMap">
+	    </script>
+	</body>
+</html>

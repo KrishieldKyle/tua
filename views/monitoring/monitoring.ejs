@@ -1,0 +1,164 @@
+<%- include("../partials/header"); %>
+<link rel="stylesheet" href="dist/css/walkingline-loading.css"/>
+<style>
+	body {
+		padding-top: 70px;
+	}
+	#tv-box {
+		display: -webkit-flex; /* Safari */
+    	-webkit-flex-wrap: wrap; /* Safari 6.1+ */
+		display: flex;
+		flex-wrap: wrap;
+	}
+	.tv {
+		width: 31%;
+		margin: 1%;
+		padding: 5px;
+		background-color: white;
+		box-shadow:  0 0 10px rgba(0,0,0,.5);
+	}
+	.tv-preview {
+		width: 100%;
+		max-height: 200px;
+	}
+</style>
+</head>
+	<body>
+		<%- include("../partials/navbar"); %>
+		<script>
+			 function init() {
+			    if (!sessionStorage.userID || sessionStorage.userID == null) {
+			      	window.location.href = "/";
+			    }
+			 } 
+
+			init();			  
+		</script>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<h3>TUA TVs</h3><hr>
+					<div class="col-md-12" id="tv-box">
+						<div class='cssload-loader-walk' style='margin-top: 15%'>
+							<div></div><div></div><div></div><div></div><div></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			var selected_location = "tua";
+
+			$(document).ready(function () {
+				function init() {
+					var tv_box = document.getElementById('tv-box');
+					tv_box.innerHTML = "";
+					$.ajax ({
+						method: 'GET',
+						url: 'https://honeypot.palmsolutions.co/api/v0/aircast_current_playing.php?Location=' + selected_location,
+						success: function (res) {
+							var tv = res;
+
+							for (var i = 0; i < tv.length; i++) {
+								var content = "";
+								var name = tv[i].Room;
+								var location = tv[i].Location;
+
+								if (location == selected_location) {
+									content += '<div class="col-md-4 tv">';
+									content += '<div id="tv_' + i + '"><img class="tv-preview" src="img/loading.png"></img></div>';
+									content += '<p class="col-md-12"><b>TV:</b> ' + name + '</p>';
+									content += '<p id="playing_' + i + '" class="col-md-12"><b>Playing:</b> Loading...</p>';
+									content += '</div>'; 
+
+									tv_box.innerHTML += content;
+								}
+							}
+
+							playContent();
+						}
+					})
+				}
+
+				current_content = [];
+				function playContent () {
+					$.ajax ({
+						method: 'GET',
+						url: 'https://honeypot.palmsolutions.co/api/v0/aircast_current_playing.php?Location=' + selected_location,
+						success: function (res) {
+							var tv_data = res;
+
+							for (var i = 0; i < tv_data.length; i++) {
+								var tv = document.getElementById('tv_' + i);
+								var playing = document.getElementById('playing_' + i);
+								var status = tv_data[i].Status;
+								var location = tv_data[i].Location;
+
+								if (location == selected_location) {
+									if (status == 1) {
+										var campaign_name = tv_data[i].Campaign.CampaignName;
+										var file_name = tv_data[i].Campaign.FileName;
+										var file_type = tv_data[i].Campaign.FileType;
+										if (file_type != null) {
+											if (file_name != current_content[i]) {
+												if (file_type == 'source') {
+													if (campaign_name == 'Facebook Posts') {
+														tv.innerHTML = "<img src='img/facebook-campaign.png' class='tv-preview'>";
+														current_content[i] = file_name;
+														playing.innerHTML = "<b>Playing: </b>" + campaign_name;
+													} else if (campaign_name == 'AircastTwitter') {
+														tv.innerHTML = "<img src='img/twitter-campaign.png' class='tv-preview'>";
+														current_content[i] = file_name;
+														playing.innerHTML = "<b>Playing: </b>" + campaign_name;
+													} else if (campaign_name == 'Instagram Post') {
+														tv.innerHTML = "<img src='img/instagram-campaign.png' class='tv-preview'>";
+														current_content[i] = file_name;
+														playing.innerHTML = "<b>Playing: </b>" + campaign_name;
+													} else if (campaign_name == 'AircastWeather') {
+														tv.innerHTML = "<img src='img/aircast-weather.png' class='tv-preview'>";
+														current_content[i] = file_name;
+														playing.innerHTML = "<b>Playing: </b>" + campaign_name;
+													} else if (campaign_name == 'AircastHugot') {
+														tv.innerHTML = "<img src='img/aircast-hugot.png' class='tv-preview'>";
+														current_content[i] = file_name;
+														playing.innerHTML = "<b>Playing: </b>" + campaign_name;
+													} else {
+														tv.innerHTML = "<img src='img/other-campaign.png' class='tv-preview'>";
+														current_content[i] = file_name;
+														playing.innerHTML = "<b>Playing: </b>" + campaign_name;
+													}
+												} else {
+													if (file_type == 'img' || file_type == 'gif') {
+														tv.innerHTML = "<img src='https://s3-ap-southeast-1.amazonaws.com/rpitv/Aircast/" + file_name + "' class='tv-preview'>";
+														current_content[i] = file_name;
+														playing.innerHTML = "<b>Playing: </b>" + campaign_name;
+													} else {
+														tv.innerHTML = "<video class='tv-preview' src='https://s3-ap-southeast-1.amazonaws.com/rpitv/Aircast/" + file_name + "' autoplay loop muted />";
+														current_content[i] = file_name;
+														playing.innerHTML = "<b>Playing: </b>" + campaign_name;
+													}
+												}
+											}
+										} else {
+											tv.innerHTML = "<img src='img/loading.png' class='tv-preview'>";
+												playing.innerHTML = "<b>Playing: </b>Loading...";
+										}
+									} else {
+										tv.innerHTML = "<img src='img/offline.png' class='tv-preview'>";
+										playing.innerHTML = "<b>Playing: </b>none";
+									}
+								}
+							}
+						}
+					})
+				}
+
+				setInterval(function () {
+					playContent();
+				}, 15000)
+
+				init();		
+			})
+		</script>
+	</body>
+</html>

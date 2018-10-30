@@ -1,0 +1,59 @@
+<style>
+  .navbar {
+    background-color: #e0e0e0;
+  }
+  #navi:hover {
+    opacity: 0.7;
+  }
+</style>
+<nav class="navbar navbar-default navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <img src='img/nav-title.png' class="navbar-brand">
+    </div>
+    <div class="navbar-collapse collapse">
+      <ul class="nav navbar-nav navbar-right" id="nav-options">
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+<script>
+  $(document).ready(function() {
+    var options = document.getElementById('nav-options');
+    if (sessionStorage.accessLevel == 1 || sessionStorage.accessLevel == 2) {
+      options.innerHTML = '<li id="navi"><a href="/home" style="color: #297ece">Home</a></li>' +
+        '<li class="dropdown">' +
+          '<a href="#" id="navi" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #297ece">Campaign<span class="caret"></span></a>' +
+          '<ul class="dropdown-menu">' +
+            '<li><a href="/my-campaign">My Campaigns</a></li>' +
+            '<li><a href="/upload-campaign">Upload Campaign</a></li>' + 
+            '<li><a href="/manage-campaign">Manage Campaigns</a></li>' +
+          '</ul>' +
+        '</li>' +
+        '<li id="navi"><a href="/monitoring" style="color: #297ece">Monitoring</a></li>' +
+        '<li id="navi"><a href="#" style="color: #297ece" onclick="logout()">Logout</a></li>';
+    } else {
+      options.innerHTML = '<li id="navi"><a href="/home" style="color: #297ece">Home</a></li>' +
+        '<li class="dropdown">' +
+          '<a href="#" id="navi" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color: #297ece">Campaign<span class="caret"></span></a>' +
+          '<ul class="dropdown-menu">' +
+            '<li><a href="/my-campaign">My Campaigns</a></li>' +
+            '<li><a href="/upload-campaign">Upload Campaign</a></li>' +
+          '</ul>' +
+        '</li>' +
+        '<li id="navi"><a href="#" style="color: #297ece" onclick="logout()">Logout</a></li>';
+    }
+  })
+
+  function logout() {
+    sessionStorage.userID = "";
+    window.location.href = "/";
+  }
+</Script>

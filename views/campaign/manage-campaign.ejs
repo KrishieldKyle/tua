@@ -1,0 +1,63 @@
+<%- include("../partials/header"); %>
+<style>
+	body {
+		padding-top: 70px;
+	}
+	.tv-list li {
+		padding: 15px;
+	}
+	.tv-list button{
+		float: right;
+		margin-top: -7px;
+	}
+</style>
+</head>
+	<body>
+		<%- include("../partials/navbar"); %>
+		<script>
+			 function init() {
+			    if (!sessionStorage.userID || sessionStorage.userID == null) {
+			      	window.location.href = "/";
+			    }
+			 } 
+
+			init();			  
+		</script>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<h3>TUA TV List</h3>
+					<div class="list-group tv-list" id="tv-list">
+						<!-- tv here -->
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			$(document).ready(function () {
+				$.ajax ({
+					method: 'GET',
+					url: 'https://honeypot.palmsolutions.co/api/v0/aircast_location.php',
+					success: function (res) {
+						var tv_list = document.getElementById('tv-list');
+						var num = 0;
+						for (var i = 0; i < res.length; i++) {
+							if (res[i].id == "tua") {
+								for (var x = 0; x < res[i].areas.length; x++) {
+									tv_list.innerHTML += "<li class='list-group-item'>" + (num + 1) + ". " + res[i].areas[x].name + "<button class='btn btn-primary' value='" + res[i].areas[x].rpi_id + "' onclick='viewCampaign(this.value)'>View Campaign</button></li>";
+									num++;
+								}
+							}
+							
+						}
+					}
+				})
+			})
+
+			function viewCampaign(rpi_id) {
+				window.location.href = "update-campaign";
+				sessionStorage.rpiID = rpi_id;
+			}
+		</script>
+	</body>
+</html>

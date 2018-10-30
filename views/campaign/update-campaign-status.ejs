@@ -1,0 +1,384 @@
+<%- include("../partials/header"); %>
+<link rel="stylesheet" href="sweetalert/dist/sweetalert.css"/>
+<script src="sweetalert/dist/sweetalert.min.js"></script>
+<style>
+	body {
+		padding-top: 70px;
+	}
+
+	.campaign-list button{
+		margin-right: 5px;
+	}
+
+	.status-icon {
+		width: 10px;
+	}
+
+	.switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 24px;
+    }
+
+      /* Hide default HTML checkbox */
+    .switch input {display:none;}
+
+      /* The slider */
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+    input:checked + .slider {
+        background-color: #4BB543;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #4BB543;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(16px);
+        -ms-transform: translateX(16px);
+        transform: translateX(16px);
+    }
+
+      /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+
+    .slider.round:before {
+        border-radius: 50%;
+    }
+
+    .btn-back {
+    	margin-bottom: 15px;
+    }
+
+    .prevcon {
+    	position: fixed;
+    }
+
+    .campaign-list li {
+    	padding: 15px;
+    }
+
+    .campaign-list button {
+    	margin-top: -7px;
+    }
+
+    .preview-container {
+    	margin-top: 70px;
+    	margin-bottom: 15px;
+    }
+
+    #preview {
+    	width: 88%;
+    	padding: 0px;
+    	height: 210px;
+    	max-height: 210px;
+    	box-shadow: 0 0 10px rgba(0,0,0,.5);
+    }
+</style>
+</head>
+	<body>
+		<script>
+			function checkRpiID () {
+				if (sessionStorage.rpiID == "" || sessionStorage.rpiID == null) {
+					window.location.href = "/manage-campaign";
+				}
+			}
+			checkRpiID();
+		</script>
+		<%- include("../partials/navbar"); %>
+		<script>
+			 function init() {
+			    if (!sessionStorage.userID || sessionStorage.userID == null) {
+			      	window.location.href = "/";
+			    }
+			 } 
+
+			init();			  
+		</script>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-8">
+					<h3 id="room-name">Campaign List</h3>
+					<div class="list-group campaign-list" id="campaign-list">
+						<!-- campaign here -->
+					</div>
+					<button class="btn btn-default btn-back" onclick="backTo()">Back</button>
+				</div>
+				<div class="col-md-4 col-md-offset-7 prevcon">
+					<div class="preview-container" id="preview-container">
+						<img class="col-md-12" src="img/loading.png">
+					</div>
+					<div class="col-md-12">
+						<br />
+						<center><span>
+							<button class="btn btn-warning" onclick="restartTV(sessionStorage.rpiID)"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Restart</button>
+							<button class="btn btn-primary" onclick="refreshBrowser(sessionStorage.rpiID)"><span class="glyphicon glyphicon-globe"></span>&nbsp;Refresh Browser</button>
+							<button class="btn btn-danger" onclick="powerOffTV(sessionStorage.rpiID)"><span class="glyphicon glyphicon-off"></span>&nbsp;Shutdown</button>
+						</span></center><br />
+						<h4>Stats:</h4><hr/>
+						<div class="col-md-12">Total campaigns:&nbsp;&nbsp;<b id="total-number-of-campaign">0</b></div>
+						<div class="col-md-12">Active campaigns:&nbsp;&nbsp;<b id="total-number-of-active-campaign">0</b></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<Script>
+			var campaign_detail = [];
+			$(document).ready(function () {
+				$.ajax ({
+					method: 'GET',
+					url: 'https://honeypot.palmsolutions.co/api/v0/aircast_api.php?Action=getcampaigns&RpiID=' + sessionStorage.rpiID,
+					success: function (res) {
+						console.log(res.data);
+						var campaign_list = document.getElementById('campaign-list');
+						var contents = 0;
+						var active_contents = 0;
+						document.getElementById('room-name').innerHTML = res.data.Room + " Campaign List";
+						for (var i = 0; i < res.data.Campaigns.length; i++) {
+							var campaign_item =  "campaign_item_" + i;
+							var campaign = "";
+
+							campaign += "<li class='list-group-item' id='" + campaign_item + "'>" + (i+1) + ". ";
+							if (res.data.Campaigns[i].isReady == 1) {
+								campaign += "<img src='img/green.png' class='status-icon'></img>";
+							} else {
+								campaign += "<img src='img/red.png' class='status-icon'></img>";
+							}
+							campaign += " " + res.data.Campaigns[i].CampaignName;
+					        if (res.data.Campaigns[i].isEnabled ==  1) {
+					        	campaign += "<label class='switch' style='float: right'>" +
+					                      "<input type='checkbox' checked value='1' onchange='updateCampaign("+ res.data.Campaigns[i].CampaignID +", this.value)'>" +
+					                      "<span class='slider round'></span>" +
+					                    "</label>";
+					            active_contents++;
+					        } else {
+					        	campaign += "<label class='switch' style='float: right'>" +
+					                      "<input type='checkbox' value='0' onchange='updateCampaign("+ res.data.Campaigns[i].CampaignID +", this.value)'>" +
+					                      "<span class='slider round'></span>" +
+					                    "</label>";
+					        }
+					        campaign += "<button class='btn btn-danger' style='float: right' value='" + res.data.Campaigns[i].CampaignID + "' onclick='deleteCampaign(" + campaign_item + ", this.value)'>Delete</button><button class='btn btn-default' style='float: right' onclick='previewCampaign(" + res.data.Campaigns[i].CampaignID + ")'>Preview</button>";
+					        if (res.data.Campaigns[i].Template == 'temp2') {
+					        	campaign += "<span style='float: right; margin-right: 20px'>Video</span>";
+					        } else if (res.data.Campaigns[i].Template == 'temp4') {
+					        	campaign += "<span style='float: right; margin-right: 20px'>Image</span>";
+					        }
+					        campaign += "</li>";
+							campaign_list.innerHTML += campaign;
+							contents++;
+							campaign_detail.push({id: res.data.Campaigns[i].CampaignID, name: res.data.Campaigns[i].CampaignName, template: res.data.Campaigns[i].Template, preview: res.data.Campaigns[i].Preview, ready: res.data.Campaigns[i].isReady, enable: res.data.Campaigns[i].isEnabled});
+						}
+						document.getElementById('total-number-of-campaign').innerHTML = contents;
+						document.getElementById('total-number-of-active-campaign').innerHTML = active_contents;
+					}
+				})
+			});
+
+			function backTo () {
+				sessionStorage.rpiID = "";
+				window.location.href = '/manage-campaign';
+			}
+
+			function updateCampaign(campaign_id, value) {
+				var newValue;
+				if (value == 1) {
+					newValue = 0;
+				} else {
+					newValue = 1;
+				}
+
+				var data = {
+					Action: 'updatecampaign',
+					RpiID: sessionStorage.rpiID,
+					CampaignID: campaign_id,
+					isEnabled: newValue
+				}
+
+				$.ajax ({
+					method: 'POST',
+					url: 'https://honeypot.palmsolutions.co/api/v0/aircast_api.php',
+					data: data,
+					dataType: 'json',
+					success: function (res) {
+						if (res.status == 'ok') {
+							swal("Success", "Yey! Campaign updated", "success");
+							for (var i = 0; i < campaign_detail.length; i++) {
+								if (campaign_id == campaign_detail[i].id) {
+									campaign_detail[i].enable = newValue;
+								}
+							}
+						} else {
+							swal("Failed", "Oops! Something went wrong.", "error");
+						}
+					}
+				})
+			}
+
+			function deleteCampaign(campaign_item, campaign_id) {
+				for (var i = 0; i < campaign_detail.length; i++) {
+					if (campaign_id == campaign_detail[i].id) {
+						if (campaign_detail[i].enable == 1) {
+							swal("Warning", "Disable first the campaign before deleting it.", "warning");
+						} else {
+							swal({
+								title: "Are you sure?",
+								text: "This campaign will be remove on the tv.",
+								type: "warning",
+								showCancelButton: true,
+								confirmButtonColor: "#DD6B55",
+								confirmButtonText: "Yes",
+								cancelButtonText: "No",
+								closeOnConfirm: false,
+								closeOnCancel: false
+							}, function (isConfirm) {
+								if (isConfirm) {
+									var data = {
+										Action: "deletecampaign",
+										RpiID: sessionStorage.rpiID,
+										CampaignID: campaign_id
+									};
+
+									$.ajax ({
+										method: 'POST',
+										url: 'https://honeypot.palmsolutions.co/api/v0/aircast_api.php',
+										data: data,
+										dataType: 'json',
+										success: function (res) {
+											if (res.status == "ok") {
+												$('#' + campaign_item.id).remove();
+												swal("Deleted", "Campaign is deleted on the tv.", "success");
+											}
+										}
+									})
+								} else {
+									swal("Cancelled", "Your campaign is safe.", "error");
+								}
+							});
+						}
+					}
+				}
+			}
+			function previewCampaign (campaign_id) {
+				var container = document.getElementById('preview-container');
+				for (var i = 0; i < campaign_detail.length; i++) {
+					if (campaign_id == campaign_detail[i].id) {
+						if (campaign_detail[i].template == 'temp4') {
+							container.innerHTML = '<img class="col-md-12" id="preview" src="' + campaign_detail[i].preview + '"></img>';
+						} else if (campaign_detail[i].template == 'temp2') {
+							container.innerHTML = '<video class="col-md-12" id="preview" src="' + campaign_detail[i].preview + '" controls autoplay loop></video>';
+						} else {
+							container.innerHTML = '<img class="col-md-12" src="img/loading.png"></img>';
+						}
+					}
+				}
+			}
+
+			function restartTV(id) {
+				swal({
+					title: "Are you sure?",
+					text: "Your TV will reboot!",
+					type: "warning",
+					confirmButtonText: "Yes, restart it.",
+					closeOnConfirm: false,
+					showCancelButton: true
+				}, function(isConfirm) {
+					if (isConfirm) {
+						$.ajax({
+							method: "POST",
+							url: "https://dashboard.aircast.ph/tv_command/restart_tv",
+							data: {
+								id: id
+							},
+							dataType: "json",
+							success: function (res) {
+								if (res.status == "ok") {
+									swal("Success", "Your TV will restart in few seconds.", "success");
+								}
+							}
+						});
+					}
+				});
+			}
+
+			function refreshBrowser(id) {
+				swal({
+					title: "Are you sure?",
+					text: "The screen of your TV will refresh!",
+					type: "warning",
+					confirmButtonText: "Yes, refresh it.",
+					closeOnConfirm: false,
+					showCancelButton: true
+				}, function(isConfirm) {
+					if (isConfirm) {
+						$.ajax({
+							method: "POST",
+							url: "https://dashboard.aircast.ph/tv_command/refresh_browser",
+							data: {
+								id: id
+							},
+							dataType: "json",
+							success:  function (res) {
+								if (res.status == "ok") {
+									swal("Success", "Your TV screen will refresh in few seconds.", "success");
+								}
+							}
+						});
+					}
+				});
+			}
+
+			function powerOffTV(id) {
+				swal({
+					title: "Are you sure?",
+					text: "Your TV will turn off and you need to turn it on manually.",
+					type: "warning",
+					confirmButtonText: "Yes, turn it off.",
+					closeOnConfirm: false,
+					showCancelButton: true
+				}, function(isConfirm) {
+					if (isConfirm) {
+						$.ajax({
+							method: "POST",
+							url: "https://dashboard.aircast.ph/tv_command/poweroff_tv",
+							data: {
+								id: id
+							},
+							dataType: "json",
+							success: function (res) {
+								if (res.status == "ok") {
+									swal("Success", "Your TV shutdown in few seconds.", "success");
+								}
+							}
+						});
+					}
+				});
+			}
+		</script>
+	</body>
+</html>
